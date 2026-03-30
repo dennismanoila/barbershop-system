@@ -1,50 +1,40 @@
 import { useEffect, useState } from "react";
-import { api } from "../api/client";
-import { useNavigate } from "react-router-dom";
+
+type Service = {
+  id: number;
+  name: string;
+  price: number;
+  durationMinutes: number;
+};
 
 export default function Services() {
-  type Service = {
-    id: number;
-    name: string;
-    durationMinutes: number;
-    price: number;
-  };
-
   const [services, setServices] = useState<Service[]>([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    load();
+    fetch("http://localhost:3000/services")
+      .then((res) => res.json())
+      .then(setServices);
   }, []);
 
-  const load = async () => {
-    const res = await api("/services");
-
-    // 🔥 eliminăm duplicatele după id
-    const unique: Service[] = Array.from(
-      new Map(res.map((s: Service) => [s.id, s])).values(),
-    ) as Service[];
-    setServices(unique);
-  };
-
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Services</h2>
+    <div className="page-container">
+      <h2 className="section-title">Services</h2>
 
-      <div className="row">
-        {services.map((s: any) => (
-          <div key={s.id} className="col-md-4 mb-3">
-            <div className="card shadow-sm p-3">
-              <h5>{s.name}</h5>
-              <p>{s.durationMinutes} min</p>
-              <p className="fw-bold">{s.price} RON</p>
+      <div className="row justify-content-center g-4">
+        {services.map((service) => (
+          <div className="col-md-5 col-lg-4" key={service.id}>
+            <div className="card shadow-sm border-0 p-3 h-100">
+              <h5>{service.name}</h5>
+
+              <p className="text-muted mb-1">{service.durationMinutes} min</p>
+
+              <p className="fw-bold mb-3">{service.price} RON</p>
 
               <button
-                className="btn btn-dark w-100"
-                onClick={() => {
-                  console.log("CLICK BOOK", s.id);
-                  navigate(`/booking?serviceId=${s.id}`);
-                }}
+                className="btn btn-dark"
+                onClick={() =>
+                  (window.location.href = `/booking?serviceId=${service.id}`)
+                }
               >
                 Book
               </button>

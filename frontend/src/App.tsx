@@ -13,6 +13,7 @@ import Services from "./pages/Services";
 import Appointments from "./pages/Appointments";
 import BarberDashboard from "./pages/BarberDashboard";
 import Booking from "./pages/Booking";
+import Register from "./pages/Register";
 
 function Layout() {
   const location = useLocation();
@@ -32,6 +33,7 @@ function Layout() {
         <Route path="/" element={<Auth />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
+        <Route path="/register" element={<Register />} />
         {/* Protected */}
         <Route
           path="/services"

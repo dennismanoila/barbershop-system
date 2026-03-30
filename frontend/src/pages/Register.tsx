@@ -1,16 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Register() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch("http://localhost:3000/auth/login", {
+    await fetch("http://localhost:3000/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -21,12 +22,7 @@ function Login() {
       }),
     });
 
-    const data = await res.json();
-
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("role", data.role);
-    window.dispatchEvent(new Event("storage"));
-    navigate("/services");
+    navigate("/login");
   };
 
   return (
@@ -35,9 +31,9 @@ function Login() {
         className="card shadow-lg p-4"
         style={{ width: "360px", borderRadius: "16px" }}
       >
-        <h3 className="text-center mb-4">Welcome Back</h3>
+        <h3 className="text-center mb-4">Create Account</h3>
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleRegister}>
           <input
             placeholder="Email"
             className="form-control mb-3"
@@ -51,12 +47,12 @@ function Login() {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button className="btn btn-dark w-100 mb-3">Login</button>
+          <button className="btn btn-dark w-100 mb-3">Register</button>
         </form>
 
         <div className="text-center">
           <small>
-            Don’t have an account? <a href="/register">Create one</a>
+            Already have an account? <a href="/login">Login</a>
           </small>
         </div>
       </div>
@@ -64,4 +60,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Register;

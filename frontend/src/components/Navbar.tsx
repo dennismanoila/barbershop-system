@@ -1,91 +1,76 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-export default function Navbar() {
+function Navbar() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
 
-  const loadUser = () => {
-    const token = localStorage.getItem("token");
+  const [role, setRole] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-    if (token) {
-      const decoded = JSON.parse(atob(token.split(".")[1]));
-      setUser(decoded);
-    } else {
-      setUser(null);
-    }
+  const loadAuth = () => {
+    const t = localStorage.getItem("token");
+    const r = localStorage.getItem("role");
+
+    setToken(t);
+    setRole(r ? r.toLowerCase() : null);
   };
 
   useEffect(() => {
-    loadUser();
+    loadAuth();
 
-    // 🔥 ascultă schimbările de storage
-    window.addEventListener("storage", loadUser);
+    // 🔥 ascultăm schimbări în localStorage (IMPORTANT)
+    window.addEventListener("storage", loadAuth);
 
     return () => {
-      window.removeEventListener("storage", loadUser);
+      window.removeEventListener("storage", loadAuth);
     };
   }, []);
 
   const logout = () => {
-    localStorage.removeItem("token");
-    loadUser();
+    localStorage.clear();
+    loadAuth();
     navigate("/login");
   };
 
   return (
-    <nav className="navbar navbar-dark bg-dark px-3">
-      <span
-        className="navbar-brand"
-        style={{ cursor: "pointer" }}
-        onClick={() => {
-          if (user?.role === "CLIENT") navigate("/services");
-          if (user?.role === "BARBER") navigate("/barber");
-          if (user?.role === "ADMIN") navigate("/admin");
-        }}
-      >
+    <nav className="navbar navbar-dark bg-dark px-4">
+      <Link className="navbar-brand fw-bold" to="/">
         Barbershop
-      </span>
+      </Link>
 
-      <div className="d-flex gap-2">
-        {user?.role === "CLIENT" && (
+      <div className="ms-auto d-flex align-items-center gap-3">
+        {token && role === "client" && (
           <>
-            <button
-              className="btn btn-outline-light"
-              onClick={() => navigate("/services")}
-            >
+            <Link className="nav-link text-white" to="/services">
               Services
-            </button>
+            </Link>
 
-            <button
-              className="btn btn-outline-light"
-              onClick={() => navigate("/appointments")}
-            >
+            <Link className="nav-link text-white" to="/appointments">
               My Appointments
-            </button>
+            </Link>
           </>
         )}
 
-        {user?.role === "BARBER" && (
-          <button
-            className="btn btn-outline-light"
-            onClick={() => navigate("/barber")}
-          >
+        {token && role === "barber" && (
+          <Link className="nav-link text-white" to="/barber">
             Dashboard
-          </button>
+          </Link>
         )}
 
-        {user?.role === "ADMIN" && (
-          <button
-            className="btn btn-outline-light"
-            onClick={() => navigate("/admin")}
-          >
-            Admin Panel
-          </button>
+        {!token && (
+          <>
+            <Link className="btn btn-outline-light btn-sm" to="/login">
+              Login
+            </Link>
+
+            <Link className="btn btn-light btn-sm" to="/register">
+              Register
+            </Link>
+          </>
         )}
 
-        {user && (
-          <button className="btn btn-danger" onClick={logout}>
+        {token && (
+          <button className="btn btn-outline-light btn-sm" onClick={logout}>
             Logout
           </button>
         )}
@@ -93,3 +78,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default Navbar;

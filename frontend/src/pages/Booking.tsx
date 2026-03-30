@@ -9,6 +9,7 @@ export default function Booking() {
   const [slots, setSlots] = useState([]);
   const [params] = useSearchParams();
   const serviceId = params.get("serviceId");
+  const [loadingSlot, setLoadingSlot] = useState<string | null>(null);
 
   useEffect(() => {
     api("/barbers").then(setBarbers);
@@ -21,8 +22,9 @@ export default function Booking() {
   };
 
   const book = async (time: string) => {
-    console.log("BOOK FUNCTION CALLED");
     try {
+      setLoadingSlot(time);
+
       if (!date) {
         alert("Select a date first");
         return;
@@ -33,9 +35,7 @@ export default function Booking() {
 
       const fullDate = new Date(`${date}T${formattedTime}:00`);
 
-      console.log("FIXED DATE:", fullDate);
-
-      const res = await api("/appointments", {
+      await api("/appointments", {
         method: "POST",
         body: JSON.stringify({
           serviceId: Number(serviceId),
@@ -45,42 +45,77 @@ export default function Booking() {
       });
 
       alert("Booked!");
+
+      loadAvailability(); // refresh slots
     } catch (err) {
-      console.error("BOOK ERROR:", err);
+      console.error(err);
+    } finally {
+      setLoadingSlot(null);
     }
   };
 
   return (
-    <div>
-      <h2>Booking</h2>
+    <div className="page-container">
+      <h2 className="section-title">Book Appointment</h2>
 
-      <h3>Select Barber (optional)</h3>
-      <select onChange={(e) => setSelectedBarber(Number(e.target.value))}>
-        <option value="">Any</option>
-        {barbers.map((b: any) => (
-          <option key={b.id} value={b.id}>
-            {b.email}
-          </option>
-        ))}
-      </select>
+      <div className="row justify-content-center">
+        <div className="col-md-6">
+          <div className="card p-4 shadow-sm mb-4">
+            <div className="mb-3">
+              <label>Barber</label>
+              <select
+                className="form-control"
+                onChange={(e) => setSelectedBarber(Number(e.target.value))}
+              >
+                <option value="">Any</option>
+                {barbers.map((b: any) => (
+                  <option key={b.id} value={b.id}>
+                    {b.email}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      <h3>Select Date</h3>
-      <input type="date" onChange={(e) => setDate(e.target.value)} />
+            <div className="mb-3">
+              <label>Date</label>
+              <input
+                type="date"
+                className="form-control"
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
 
-      <button onClick={loadAvailability}>Check Availability</button>
-
-      <h3>Available Slots</h3>
-      {slots.map((slot: any, i) => (
-        <div key={i}>
-          {slot.time} → {slot.availableBarbers} available
-          <button
-            disabled={slot.availableBarbers === 0}
-            onClick={() => book(slot.time)}
-          >
-            {slot.availableBarbers === 0 ? "Full" : "Book"}
-          </button>
+            <button className="btn btn-dark" onClick={loadAvailability}>
+              Check Availability
+            </button>
+          </div>
         </div>
-      ))}
+      </div>
+
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card p-4 shadow-sm">
+            <h5 className="mb-3">Available Slots</h5>
+
+            <div className="d-flex flex-wrap gap-2">
+              {slots.map((slot: any, i) => (
+                <button
+                  key={i}
+                  disabled={slot.availableBarbers === 0}
+                  className={`btn ${
+                    slot.availableBarbers === 0
+                      ? "btn-secondary"
+                      : "btn-outline-dark"
+                  }`}
+                  onClick={() => book(slot.time)}
+                >
+                  {slot.time}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
