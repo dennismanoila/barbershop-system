@@ -1,0 +1,31 @@
+body {
+  background-color: #f8f9fa;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+.card {
+  border-radius: 16px !important;
+}
+
+.btn-dark {
+  border-radius: 10px;
+}
+
+.form-control {
+  border-radius: 10px;
+  padding: 10px;
+}
