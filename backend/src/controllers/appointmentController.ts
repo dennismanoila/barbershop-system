@@ -56,7 +56,7 @@ export const getAppointmentsHandler = async (req: Request, res: Response) => {
 };
 
 export const getAvailabilityHandler = async (req: Request, res: Response) => {
-  const { date } = req.query;
+  const { date, barberId } = req.query;
 
   if (!date) {
     return res.status(400).json({
@@ -64,7 +64,8 @@ export const getAvailabilityHandler = async (req: Request, res: Response) => {
     });
   }
 
-  const result = await getAvailability(new Date(date as string));
+  const parsedBarberId = barberId ? Number(barberId) : undefined;
+  const result = await getAvailability(new Date(date as string), parsedBarberId);
 
   res.json(result);
 };

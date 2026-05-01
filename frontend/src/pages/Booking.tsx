@@ -27,7 +27,10 @@ export default function Booking() {
     setSlotsLoaded(false);
     setSuccessMessage("");
     try {
-      const res = await api(`/availability?date=${date}`);
+      const query = selectedBarber
+        ? `/availability?date=${date}&barberId=${selectedBarber}`
+        : `/availability?date=${date}`;
+      const res = await api(query);
       setSlots(res);
       setSlotsLoaded(true);
     } catch (err) {
@@ -207,13 +210,22 @@ export default function Booking() {
           background: #fff;
           color: #111;
           transition: background 0.15s, color 0.15s, transform 0.1s;
-          min-width: 72px;
+          min-width: 80px;
           text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+          line-height: 1.2;
         }
 
         .slot-btn:hover:not(:disabled) {
           background: #111;
           color: #fff;
+        }
+
+        .slot-btn:hover:not(:disabled) .slot-spots {
+          color: #aaa;
         }
 
         .slot-btn:active:not(:disabled) { transform: scale(0.97); }
@@ -230,10 +242,43 @@ export default function Booking() {
           color: #fff;
         }
 
-        .slots-hint {
+        .slot-btn.low-availability {
+          border-color: #c8a400;
+          color: #7a6000;
+          background: #fffbea;
+        }
+
+        .slot-btn.low-availability:hover:not(:disabled) {
+          background: #c8a400;
+          color: #fff;
+        }
+
+        .slot-spots {
+          font-size: 0.68rem;
+          font-weight: 400;
+          color: #999;
+          white-space: nowrap;
+        }
+
+        .slots-legend {
           margin-top: 16px;
-          font-size: 0.78rem;
-          color: #bbb;
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .slots-legend-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.75rem;
+          color: #999;
+        }
+
+        .legend-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
         }
       `}</style>
 
@@ -247,9 +292,11 @@ export default function Booking() {
           <label className="booking-label">Barber</label>
           <select
             className="booking-select"
-            onChange={(e) =>
-              setSelectedBarber(e.target.value ? Number(e.target.value) : null)
-            }
+            onChange={(e) => {
+              setSelectedBarber(e.target.value ? Number(e.target.value) : null);
+              setSlots([]);
+              setSlotsLoaded(false);
+            }}
           >
             <option value="">Any available barber</option>
             {barbers.map((b: any) => (
@@ -297,22 +344,68 @@ export default function Booking() {
               <div className="slots-grid">
                 {slots.map((slot: any, i) => {
                   const unavailable = slot.availableBarbers === 0;
+                  const lowAvailability =
+                    !selectedBarber &&
+                    !unavailable &&
+                    slot.availableBarbers === 1 &&
+                    slot.totalBarbers > 1;
                   const isLoading = loadingSlot === slot.time;
                   return (
                     <button
                       key={i}
                       disabled={unavailable || !!loadingSlot}
-                      className={`slot-btn${isLoading ? " loading" : ""}`}
+                      className={`slot-btn${isLoading ? " loading" : ""}${lowAvailability ? " low-availability" : ""}`}
                       onClick={() => book(slot.time)}
                     >
-                      {isLoading ? "..." : slot.time}
+                      {isLoading ? (
+                        "..."
+                      ) : selectedBarber ? (
+                        <span>{slot.time}</span>
+                      ) : (
+                        <>
+                          <span>{slot.time}</span>
+                          <span className="slot-spots">
+                            {unavailable
+                              ? "Full"
+                              : `${slot.availableBarbers} spot${slot.availableBarbers !== 1 ? "s" : ""} left`}
+                          </span>
+                        </>
+                      )}
                     </button>
                   );
                 })}
               </div>
             )}
 
-            <p className="slots-hint">Grey slots are fully booked.</p>
+            <div className="slots-legend">
+              {selectedBarber ? (
+                <>
+                  <span className="slots-legend-item">
+                    <span className="legend-dot" style={{ background: "#111" }} />
+                    Available
+                  </span>
+                  <span className="slots-legend-item">
+                    <span className="legend-dot" style={{ background: "#e0e0e0" }} />
+                    Booked
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="slots-legend-item">
+                    <span className="legend-dot" style={{ background: "#111" }} />
+                    Available
+                  </span>
+                  <span className="slots-legend-item">
+                    <span className="legend-dot" style={{ background: "#c8a400" }} />
+                    1 spot left
+                  </span>
+                  <span className="slots-legend-item">
+                    <span className="legend-dot" style={{ background: "#e0e0e0" }} />
+                    Fully booked
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

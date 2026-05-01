@@ -40,13 +40,14 @@ const getAppointmentsHandler = async (req, res) => {
 };
 exports.getAppointmentsHandler = getAppointmentsHandler;
 const getAvailabilityHandler = async (req, res) => {
-    const { date } = req.query;
+    const { date, barberId } = req.query;
     if (!date) {
         return res.status(400).json({
             message: "Date is required",
         });
     }
-    const result = await (0, appointmentService_1.getAvailability)(new Date(date));
+    const parsedBarberId = barberId ? Number(barberId) : undefined;
+    const result = await (0, appointmentService_1.getAvailability)(new Date(date), parsedBarberId);
     res.json(result);
 };
 exports.getAvailabilityHandler = getAvailabilityHandler;

@@ -73,6 +73,26 @@ export const findAppointmentsByDate = async (date: Date) => {
         lte: end,
       },
     },
+    include: { service: true },
+  });
+};
+
+export const findBarberAppointmentsOnDay = async (
+  barberId: number,
+  date: Date,
+) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+
+  return prisma.appointment.findMany({
+    where: {
+      barberId,
+      date: { gte: start, lte: end },
+    },
+    include: { service: true },
   });
 };
 

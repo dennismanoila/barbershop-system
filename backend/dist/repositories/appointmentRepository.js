@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.confirmAppointment = exports.findAppointmentsByDate = exports.findConflictsForBarber = exports.findConflict = exports.findAppointmentsByUser = exports.findAppointmentsByBarber = exports.createAppointment = void 0;
+exports.confirmAppointment = exports.findBarberAppointmentsOnDay = exports.findAppointmentsByDate = exports.findConflictsForBarber = exports.findConflict = exports.findAppointmentsByUser = exports.findAppointmentsByBarber = exports.createAppointment = void 0;
 const prisma_1 = require("../lib/prisma");
 const createAppointment = async (data) => {
     return prisma_1.prisma.appointment.create({
@@ -68,9 +68,24 @@ const findAppointmentsByDate = async (date) => {
                 lte: end,
             },
         },
+        include: { service: true },
     });
 };
 exports.findAppointmentsByDate = findAppointmentsByDate;
+const findBarberAppointmentsOnDay = async (barberId, date) => {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+    return prisma_1.prisma.appointment.findMany({
+        where: {
+            barberId,
+            date: { gte: start, lte: end },
+        },
+        include: { service: true },
+    });
+};
+exports.findBarberAppointmentsOnDay = findBarberAppointmentsOnDay;
 const confirmAppointment = async (id) => {
     return prisma_1.prisma.appointment.update({
         where: { id },
