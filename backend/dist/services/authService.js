@@ -7,16 +7,13 @@ exports.loginUser = exports.registerUser = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userRepository_1 = require("../repositories/userRepository");
-const registerUser = async (email, password) => {
+const registerUser = async (email, password, firstName, lastName) => {
     const existingUser = await (0, userRepository_1.findUserByEmail)(email);
     if (existingUser) {
         throw new Error("User already exists");
     }
     const hashedPassword = await bcrypt_1.default.hash(password, 10);
-    return (0, userRepository_1.createUser)({
-        email,
-        password: hashedPassword,
-    });
+    return (0, userRepository_1.createUser)({ email, password: hashedPassword, firstName, lastName });
 };
 exports.registerUser = registerUser;
 const loginUser = async (email, password) => {
@@ -28,7 +25,10 @@ const loginUser = async (email, password) => {
     if (!isMatch) {
         throw new Error("Invalid credentials");
     }
-    const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    if (user.banned) {
+        throw new Error("Account is banned");
+    }
+    const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     return {
         token,
         user,

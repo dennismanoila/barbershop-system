@@ -1,5 +1,4 @@
-import { findAllServices } from "../repositories/serviceRepository";
-import { createService } from "../repositories/serviceRepository";
+import { createService, deleteService, findAllServices } from "../repositories/serviceRepository";
 
 export const getAllServices = async () => {
   return findAllServices();
@@ -11,4 +10,8 @@ export const addService = async (data: {
   price: number;
 }) => {
   return createService(data);
+};
+
+export const removeService = async (id: number) => {
+  return deleteService(id);
 };

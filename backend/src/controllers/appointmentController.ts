@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
 import {
   bookAppointment,
+  cancelAppointmentService,
   confirmAppointmentService,
   getAvailability,
+  getBarberCalendar,
+  getBarberPendingAppointments,
   getUserAppointments,
 } from "../services/appointmentService";
 import { findAppointmentsByBarber } from "../repositories/appointmentRepository";
@@ -70,6 +73,25 @@ export const getAvailabilityHandler = async (req: Request, res: Response) => {
   res.json(result);
 };
 
+export const getBarberCalendarHandler = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const { date } = req.query;
+
+  if (!date) return res.status(400).json({ message: "Date is required" });
+
+  const appointments = await getBarberCalendar(
+    user.userId,
+    new Date(date as string),
+  );
+  res.json(appointments);
+};
+
+export const getBarberPendingHandler = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const appointments = await getBarberPendingAppointments(user.userId);
+  res.json(appointments);
+};
+
 export const confirmAppointmentHandler = async (
   req: Request,
   res: Response,
@@ -84,4 +106,18 @@ export const confirmAppointmentHandler = async (
   const appointment = await confirmAppointmentService(Number(id));
 
   res.json(appointment);
+};
+
+export const cancelAppointmentHandler = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const { id } = req.params;
+
+  try {
+    const appointment = await cancelAppointmentService(Number(id), user.userId, user.role);
+    res.json(appointment);
+  } catch (err: any) {
+    if (err.message === "Forbidden") return res.status(403).json({ message: "Forbidden" });
+    if (err.message === "Appointment not found") return res.status(404).json({ message: err.message });
+    res.status(400).json({ message: err.message });
+  }
 };

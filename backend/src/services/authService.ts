@@ -2,7 +2,12 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createUser, findUserByEmail } from "../repositories/userRepository";
 
-export const registerUser = async (email: string, password: string) => {
+export const registerUser = async (
+  email: string,
+  password: string,
+  firstName?: string,
+  lastName?: string,
+) => {
   const existingUser = await findUserByEmail(email);
 
   if (existingUser) {
@@ -11,10 +16,7 @@ export const registerUser = async (email: string, password: string) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  return createUser({
-    email,
-    password: hashedPassword,
-  });
+  return createUser({ email, password: hashedPassword, firstName, lastName });
 };
 
 export const loginUser = async (email: string, password: string) => {
@@ -30,10 +32,14 @@ export const loginUser = async (email: string, password: string) => {
     throw new Error("Invalid credentials");
   }
 
+  if (user.banned) {
+    throw new Error("Account is banned");
+  }
+
   const token = jwt.sign(
     { userId: user.id, role: user.role },
     process.env.JWT_SECRET as string,
-    { expiresIn: "1h" },
+    { expiresIn: "7d" },
   );
 
   return {

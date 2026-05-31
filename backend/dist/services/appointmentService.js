@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.confirmAppointmentService = exports.getAvailability = exports.getUserAppointments = exports.bookAppointment = void 0;
+exports.cancelAppointmentService = exports.confirmAppointmentService = exports.getBarberPendingAppointments = exports.getBarberCalendar = exports.getAvailability = exports.getUserAppointments = exports.bookAppointment = void 0;
 const userRepository_1 = require("../repositories/userRepository");
 const appointmentRepository_1 = require("../repositories/appointmentRepository");
 const prisma_1 = require("../lib/prisma");
+const holidays_1 = require("../utils/holidays");
 const hasOverlap = (appointments, newStart, newDurationMinutes) => {
     const newEnd = new Date(newStart.getTime() + newDurationMinutes * 60 * 1000);
     return appointments.some((appointment) => {
@@ -17,9 +18,16 @@ const bookAppointment = async (userId, serviceId, date, barberId) => {
     if (minutes !== 0 && minutes !== 30) {
         throw new Error("Appointments must be at :00 or :30");
     }
+    const { isHoliday, name: holidayName } = await (0, holidays_1.checkHoliday)(date);
+    if (isHoliday)
+        throw new Error(`Bookings are unavailable on ${holidayName}`);
     const service = await prisma_1.prisma.service.findUnique({ where: { id: serviceId } });
     if (!service)
         throw new Error("Service not found");
+    const userExisting = await (0, appointmentRepository_1.findUserAppointmentsOnDay)(userId, date);
+    if (hasOverlap(userExisting, date, service.durationMinutes)) {
+        throw new Error("You already have an appointment at this time");
+    }
     let assignedBarberId = barberId;
     if (barberId) {
         const existing = await (0, appointmentRepository_1.findBarberAppointmentsOnDay)(barberId, date);
@@ -53,6 +61,11 @@ const getUserAppointments = async (userId) => {
 };
 exports.getUserAppointments = getUserAppointments;
 const getAvailability = async (date, barberId) => {
+    await (0, appointmentRepository_1.expireOldPending)();
+    const { isHoliday, name: holidayName } = await (0, holidays_1.checkHoliday)(date);
+    if (isHoliday) {
+        return { holiday: true, holidayName, slots: [] };
+    }
     const appointments = await (0, appointmentRepository_1.findAppointmentsByDate)(date);
     const SLOT_MS = 30 * 60 * 1000;
     const slots = [];
@@ -106,10 +119,41 @@ const getAvailability = async (date, barberId) => {
             }
         }
     }
-    return slots;
+    return { holiday: false, holidayName: null, slots };
 };
 exports.getAvailability = getAvailability;
+const getBarberCalendar = async (barberId, date) => {
+    await (0, appointmentRepository_1.expireOldPending)();
+    return (0, appointmentRepository_1.findBarberCalendarDay)(barberId, date);
+};
+exports.getBarberCalendar = getBarberCalendar;
+const getBarberPendingAppointments = async (barberId) => {
+    await (0, appointmentRepository_1.expireOldPending)();
+    return (0, appointmentRepository_1.findBarberPending)(barberId);
+};
+exports.getBarberPendingAppointments = getBarberPendingAppointments;
 const confirmAppointmentService = async (id) => {
     return (0, appointmentRepository_1.confirmAppointment)(id);
 };
 exports.confirmAppointmentService = confirmAppointmentService;
+const cancelAppointmentService = async (id, userId, role) => {
+    const appointment = await (0, appointmentRepository_1.findAppointmentById)(id);
+    if (!appointment)
+        throw new Error("Appointment not found");
+    if (appointment.status === "CANCELLED" || appointment.status === "EXPIRED") {
+        throw new Error("Appointment is already closed");
+    }
+    if (role === "CLIENT") {
+        if (appointment.userId !== userId)
+            throw new Error("Forbidden");
+        if (appointment.status !== "PENDING") {
+            throw new Error("Only pending appointments can be cancelled");
+        }
+    }
+    else if (role === "BARBER") {
+        if (appointment.barberId !== userId)
+            throw new Error("Forbidden");
+    }
+    return (0, appointmentRepository_1.cancelAppointment)(id);
+};
+exports.cancelAppointmentService = cancelAppointmentService;

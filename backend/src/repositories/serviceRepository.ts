@@ -9,7 +9,9 @@ export const createService = async (data: {
   durationMinutes: number;
   price: number;
 }) => {
-  return prisma.service.create({
-    data,
-  });
+  return prisma.service.create({ data });
+};
+
+export const deleteService = async (id: number) => {
+  return prisma.service.delete({ where: { id } });
 };

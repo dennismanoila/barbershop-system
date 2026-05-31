@@ -9,6 +9,7 @@ const errorMiddleware_1 = require("./middlewares/errorMiddleware");
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const appointmentRoutes_1 = __importDefault(require("./routes/appointmentRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 const PORT = 3000;
@@ -18,6 +19,7 @@ app.use(serviceRoutes_1.default);
 app.use(authRoutes_1.default);
 app.use(appointmentRoutes_1.default);
 app.use(userRoutes_1.default);
+app.use(adminRoutes_1.default);
 app.use(errorMiddleware_1.errorHandler);
 app.get("/", (req, res) => {
     res.send("Barbershop API is running");

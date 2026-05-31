@@ -4,6 +4,7 @@ import { errorHandler } from "./middlewares/errorMiddleware";
 import authRoutes from "./routes/authRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
 import userRoutes from "./routes/userRoutes";
+import adminRoutes from "./routes/adminRoutes";
 import cors from "cors";
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(router);
 app.use(authRoutes);
 app.use(appointmentRoutes);
 app.use(userRoutes);
+app.use(adminRoutes);
 
 app.use(errorHandler);
 

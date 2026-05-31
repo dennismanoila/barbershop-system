@@ -1,12 +1,19 @@
 import { findBarbers } from "../repositories/userRepository";
 import {
+  cancelAppointment,
   confirmAppointment,
   createAppointment,
+  expireOldPending,
+  findAppointmentById,
   findAppointmentsByDate,
   findAppointmentsByUser,
   findBarberAppointmentsOnDay,
+  findBarberCalendarDay,
+  findBarberPending,
+  findUserAppointmentsOnDay,
 } from "../repositories/appointmentRepository";
 import { prisma } from "../lib/prisma";
+import { checkHoliday } from "../utils/holidays";
 
 const hasOverlap = (
   appointments: Array<{ date: Date; service: { durationMinutes: number } }>,
@@ -35,8 +42,16 @@ export const bookAppointment = async (
     throw new Error("Appointments must be at :00 or :30");
   }
 
+  const { isHoliday, name: holidayName } = await checkHoliday(date);
+  if (isHoliday) throw new Error(`Bookings are unavailable on ${holidayName}`);
+
   const service = await prisma.service.findUnique({ where: { id: serviceId } });
   if (!service) throw new Error("Service not found");
+
+  const userExisting = await findUserAppointmentsOnDay(userId, date);
+  if (hasOverlap(userExisting, date, service.durationMinutes)) {
+    throw new Error("You already have an appointment at this time");
+  }
 
   let assignedBarberId = barberId;
 
@@ -74,6 +89,12 @@ export const getUserAppointments = async (userId: number) => {
 };
 
 export const getAvailability = async (date: Date, barberId?: number) => {
+  await expireOldPending();
+  const { isHoliday, name: holidayName } = await checkHoliday(date);
+  if (isHoliday) {
+    return { holiday: true, holidayName, slots: [] };
+  }
+
   const appointments = await findAppointmentsByDate(date);
   const SLOT_MS = 30 * 60 * 1000;
   const slots = [];
@@ -136,9 +157,43 @@ export const getAvailability = async (date: Date, barberId?: number) => {
     }
   }
 
-  return slots;
+  return { holiday: false, holidayName: null, slots };
+};
+
+export const getBarberCalendar = async (barberId: number, date: Date) => {
+  await expireOldPending();
+  return findBarberCalendarDay(barberId, date);
+};
+
+export const getBarberPendingAppointments = async (barberId: number) => {
+  await expireOldPending();
+  return findBarberPending(barberId);
 };
 
 export const confirmAppointmentService = async (id: number) => {
   return confirmAppointment(id);
+};
+
+export const cancelAppointmentService = async (
+  id: number,
+  userId: number,
+  role: string,
+) => {
+  const appointment = await findAppointmentById(id);
+  if (!appointment) throw new Error("Appointment not found");
+
+  if (appointment.status === "CANCELLED" || appointment.status === "EXPIRED") {
+    throw new Error("Appointment is already closed");
+  }
+
+  if (role === "CLIENT") {
+    if (appointment.userId !== userId) throw new Error("Forbidden");
+    if (appointment.status !== "PENDING") {
+      throw new Error("Only pending appointments can be cancelled");
+    }
+  } else if (role === "BARBER") {
+    if (appointment.barberId !== userId) throw new Error("Forbidden");
+  }
+
+  return cancelAppointment(id);
 };

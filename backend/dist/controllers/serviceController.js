@@ -1,8 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createServiceHandler = exports.getServices = void 0;
+exports.deleteServiceHandler = exports.createServiceHandler = exports.getServices = void 0;
 const serviceService_1 = require("../services/serviceService");
-const serviceService_2 = require("../services/serviceService");
 const getServices = async (req, res) => {
     const services = await (0, serviceService_1.getAllServices)();
     res.json(services);
@@ -24,7 +23,7 @@ const createServiceHandler = async (req, res) => {
             message: "Invalid data types",
         });
     }
-    const newService = await (0, serviceService_2.addService)({
+    const newService = await (0, serviceService_1.addService)({
         name,
         durationMinutes,
         price,
@@ -32,3 +31,14 @@ const createServiceHandler = async (req, res) => {
     res.status(201).json(newService);
 };
 exports.createServiceHandler = createServiceHandler;
+const deleteServiceHandler = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await (0, serviceService_1.removeService)(Number(id));
+        res.status(204).send();
+    }
+    catch {
+        res.status(400).json({ message: "Cannot delete service with existing appointments" });
+    }
+};
+exports.deleteServiceHandler = deleteServiceHandler;

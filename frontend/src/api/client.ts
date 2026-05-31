@@ -10,8 +10,12 @@ export const api = async (url: string, options: any = {}) => {
   });
 
   if (!res.ok) {
-    throw new Error("API error");
+    const body = await res.json().catch(() => ({}));
+    const err: any = new Error(body.message || "API error");
+    err.status = res.status;
+    throw err;
   }
 
+  if (res.status === 204) return null;
   return res.json();
 };

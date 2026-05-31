@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { useSearchParams } from "react-router-dom";
+import Calendar from "../components/Calendar";
 
 export default function Booking() {
   const [barbers, setBarbers] = useState([]);
@@ -13,6 +14,7 @@ export default function Booking() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [slotsLoaded, setSlotsLoaded] = useState(false);
+  const [holidayMessage, setHolidayMessage] = useState("");
 
   useEffect(() => {
     api("/barbers").then(setBarbers);
@@ -26,12 +28,18 @@ export default function Booking() {
     setLoadingSlots(true);
     setSlotsLoaded(false);
     setSuccessMessage("");
+    setHolidayMessage("");
     try {
       const query = selectedBarber
         ? `/availability?date=${date}&barberId=${selectedBarber}`
         : `/availability?date=${date}`;
       const res = await api(query);
-      setSlots(res);
+      if (res.holiday) {
+        setHolidayMessage(`The barbershop is closed today due to a public Romanian holiday: ${res.holidayName}.`);
+        setSlots([]);
+      } else {
+        setSlots(res.slots);
+      }
       setSlotsLoaded(true);
     } catch (err) {
       console.error(err);
@@ -176,6 +184,18 @@ export default function Booking() {
           text-align: center;
         }
 
+        .booking-holiday {
+          max-width: 520px;
+          margin: 0 auto 24px auto;
+          background: #fff8e6;
+          color: #b07d00;
+          border: 1px solid #f0d080;
+          border-radius: 12px;
+          padding: 12px 20px;
+          font-size: 0.9rem;
+          text-align: center;
+        }
+
         .slots-card {
           background: #fff;
           border-radius: 20px;
@@ -280,6 +300,14 @@ export default function Booking() {
           height: 10px;
           border-radius: 50%;
         }
+
+        @media (max-width: 640px) {
+          .booking-page { padding: 36px 16px; }
+          .booking-title { font-size: 2rem; }
+          .booking-header { margin-bottom: 28px; }
+          .booking-card { padding: 24px 20px; }
+          .slots-card { padding: 24px 20px; }
+        }
       `}</style>
 
       <div className="booking-page">
@@ -301,21 +329,21 @@ export default function Booking() {
             <option value="">Any available barber</option>
             {barbers.map((b: any) => (
               <option key={b.id} value={b.id}>
-                {b.name || b.email}
+                {[b.firstName, b.lastName].filter(Boolean).join(" ") || b.email}
               </option>
             ))}
           </select>
 
           <label className="booking-label">Date</label>
-          <input
-            type="date"
-            className="booking-input"
-            min={today}
-            onChange={(e) => {
-              setDate(e.target.value);
+          <Calendar
+            value={date}
+            minDate={today}
+            onChange={(d) => {
+              setDate(d);
               setSlots([]);
               setSlotsLoaded(false);
               setSuccessMessage("");
+              setHolidayMessage("");
             }}
           />
 
@@ -332,7 +360,11 @@ export default function Booking() {
           <div className="booking-success">✅ {successMessage}</div>
         )}
 
-        {slotsLoaded && (
+        {holidayMessage && (
+          <div className="booking-holiday">{holidayMessage}</div>
+        )}
+
+        {slotsLoaded && !holidayMessage && (
           <div className="slots-card">
             <div className="slots-title">Available Slots</div>
 

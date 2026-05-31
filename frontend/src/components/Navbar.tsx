@@ -34,47 +34,75 @@ function Navbar() {
   const { token, role } = auth;
 
   return (
-    <nav className="navbar navbar-dark bg-dark px-4">
-      <Link className="navbar-brand fw-bold" to="/">
-        ✂️ Barbershop
-      </Link>
+    <>
+      <style>{`
+        .nav-inner {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 576px) {
+          .navbar { padding: 10px 16px !important; }
+          .navbar-brand { font-size: 1rem; }
+          .nav-inner { gap: 8px; width: 100%; margin-top: 6px; }
+          .nav-inner .nav-link { font-size: 0.85rem; padding: 0; }
+          .nav-inner .btn-sm { font-size: 0.8rem; padding: 4px 12px; }
+        }
+      `}</style>
+      <nav className="navbar navbar-dark bg-dark px-4 flex-wrap">
+        <Link className="navbar-brand fw-bold" to="/">
+          ✂️ Barbershop
+        </Link>
 
-      <div className="ms-auto d-flex align-items-center gap-3">
-        {token && role === "client" && (
-          <>
-            <Link className="nav-link text-white" to="/services">
-              Services
-            </Link>
-            <Link className="nav-link text-white" to="/appointments">
-              My Appointments
-            </Link>
-          </>
-        )}
+        <div className="nav-inner">
+          {token && role === "client" && (
+            <>
+              <Link className="nav-link text-white" to="/services">
+                Services
+              </Link>
+              <Link className="nav-link text-white" to="/appointments">
+                Appointments
+              </Link>
+            </>
+          )}
 
-        {token && role === "barber" && (
-          <Link className="nav-link text-white" to="/barber">
-            Dashboard
-          </Link>
-        )}
-
-        {!token && (
-          <>
-            <Link className="btn btn-outline-light btn-sm" to="/">
-              Login
+          {token && role === "barber" && (
+            <Link className="nav-link text-white" to="/barber">
+              Dashboard
             </Link>
-            <Link className="btn btn-light btn-sm" to="/register">
-              Register
-            </Link>
-          </>
-        )}
+          )}
 
-        {token && (
-          <button className="btn btn-outline-light btn-sm" onClick={logout}>
-            Logout
-          </button>
-        )}
-      </div>
-    </nav>
+          {token && role === "admin" && (
+            <>
+              <Link className="nav-link text-white" to="/services">
+                Services
+              </Link>
+              <Link className="nav-link text-white" to="/admin">
+                Admin Panel
+              </Link>
+            </>
+          )}
+
+          {!token && (
+            <>
+              <Link className="btn btn-outline-light btn-sm" to="/">
+                Login
+              </Link>
+              <Link className="btn btn-light btn-sm" to="/register">
+                Register
+              </Link>
+            </>
+          )}
+
+          {token && (
+            <button className="btn btn-outline-light btn-sm" onClick={logout}>
+              Logout
+            </button>
+          )}
+        </div>
+      </nav>
+    </>
   );
 }
 

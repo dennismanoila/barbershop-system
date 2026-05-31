@@ -6,6 +6,8 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,11 +19,14 @@ export default function Auth() {
       const endpoint = isLogin ? "/auth/login" : "/auth/register";
       const res = await api(endpoint, {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(
+          isLogin ? { email, password } : { email, password, firstName, lastName }
+        ),
       });
 
       if (isLogin) {
-        const user = JSON.parse(atob(res.token.split(".")[1]));
+        const base64 = res.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const user = JSON.parse(atob(base64));
         localStorage.setItem("token", res.token);
         localStorage.setItem("role", user.role.toLowerCase());
         window.dispatchEvent(new Event("authChange"));
@@ -33,12 +38,16 @@ export default function Auth() {
         alert("Account created! You can now log in.");
         setIsLogin(true);
       }
-    } catch {
-      setError(
-        isLogin
-          ? "Invalid email or password."
-          : "Registration failed. Try again.",
-      );
+    } catch (err: any) {
+      if (isLogin && err?.message?.toLowerCase().includes("banned")) {
+        setError("Your account has been banned.");
+      } else {
+        setError(
+          isLogin
+            ? "Invalid email or password."
+            : "Registration failed. Try again.",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -264,6 +273,27 @@ export default function Auth() {
             </p>
 
             {error && <div className="auth-error">{error}</div>}
+
+            {!isLogin && (
+              <div style={{ display: "flex", gap: "10px" }}>
+                <input
+                  className="auth-input"
+                  style={{ marginBottom: 14 }}
+                  type="text"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+                <input
+                  className="auth-input"
+                  style={{ marginBottom: 14 }}
+                  type="text"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            )}
 
             <input
               className="auth-input"

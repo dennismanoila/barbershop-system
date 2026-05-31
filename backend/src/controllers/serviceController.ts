@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
-import { getAllServices } from "../services/serviceService";
-import { addService } from "../services/serviceService";
+import { addService, getAllServices, removeService } from "../services/serviceService";
 
 export const getServices = async (req: Request, res: Response) => {
   const services = await getAllServices();
@@ -38,4 +37,14 @@ export const createServiceHandler = async (req: Request, res: Response) => {
   });
 
   res.status(201).json(newService);
+};
+
+export const deleteServiceHandler = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    await removeService(Number(id));
+    res.status(204).send();
+  } catch {
+    res.status(400).json({ message: "Cannot delete service with existing appointments" });
+  }
 };

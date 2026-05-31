@@ -168,6 +168,13 @@ export default function Services() {
           padding: 80px 0;
           font-size: 0.95rem;
         }
+
+        @media (max-width: 640px) {
+          .services-page { padding: 36px 16px; }
+          .services-title { font-size: 2rem; }
+          .services-header { margin-bottom: 32px; }
+          .services-grid { grid-template-columns: 1fr; }
+        }
       `}</style>
 
       <div className="services-page">

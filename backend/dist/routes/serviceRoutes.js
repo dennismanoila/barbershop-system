@@ -7,4 +7,5 @@ const roleMiddleware_1 = require("../middlewares/roleMiddleware");
 const router = (0, express_1.Router)();
 router.get("/services", serviceController_1.getServices);
 router.post("/services", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.requireRole)("ADMIN"), serviceController_1.createServiceHandler);
+router.delete("/services/:id", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.requireRole)("ADMIN"), serviceController_1.deleteServiceHandler);
 exports.default = router;

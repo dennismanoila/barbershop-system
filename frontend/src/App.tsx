@@ -14,6 +14,9 @@ import Appointments from "./pages/Appointments";
 import BarberDashboard from "./pages/BarberDashboard";
 import Booking from "./pages/Booking";
 import Register from "./pages/Register";
+import Admin from "./pages/Admin";
+import AdminRoute from "./components/AdminRoute";
+import Profile from "./pages/Profile";
 
 function Layout() {
   const location = useLocation();
@@ -64,6 +67,22 @@ function Layout() {
           element={
             <ProtectedRoute>
               <Booking />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />
